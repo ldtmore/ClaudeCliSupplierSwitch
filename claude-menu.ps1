@@ -4,7 +4,7 @@
 #  数据文件: ~\.claude\suppliers.json   格式说明: ~\.claude\suppliers.help.md
 # ============================================================================
 
-$script:ClaudeMenuVersion = 'v1.4'
+$script:ClaudeMenuVersion = 'v1.4.1'
 $script:ClaudeMenuDataFile = Join-Path $HOME '.claude\suppliers.json'
 $script:ClaudeMenuLastFile = Join-Path $HOME '.claude\.supplier-last'
 # 基础清理列表：official 入口启动前要清掉的环境变量。

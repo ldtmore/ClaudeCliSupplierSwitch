@@ -39,7 +39,12 @@ function Remove-MenuMount {
     $keep = @()
     if ($idx -gt 0) { $keep = $lines[0..($idx - 1)] }
     $enc = New-Object System.Text.UTF8Encoding(-not $IsBash.IsPresent)
-    [System.IO.File]::WriteAllLines($Path, $keep, $enc)
+    # .bashrc 必须保持 LF：WriteAllLines 会统一写 CRLF，导致 bash 把 \r 当命令的一部分
+    if ($IsBash) {
+        [System.IO.File]::WriteAllText($Path, (($keep -join "`n") + "`n"), $enc)
+    } else {
+        [System.IO.File]::WriteAllLines($Path, $keep, $enc)
+    }
     Write-Ok ('已移除挂载块（备份为 ' + [System.IO.Path]::GetFileName($Path) + '.bak-' + $stamp + '）')
 }
 

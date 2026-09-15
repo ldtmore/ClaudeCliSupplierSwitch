@@ -5,7 +5,7 @@
 #            JSON 可随意折行，值里可以出现英文双引号
 # ============================================================================
 
-_CLAUDE_MENU_VERSION="v1.4"
+_CLAUDE_MENU_VERSION="v1.4.1"
 _CLAUDE_MENU_DATA="$HOME/.claude/suppliers.json"
 _CLAUDE_MENU_LAST="$HOME/.claude/.supplier-last"
 # 基础清理列表：official 入口启动前要清掉的环境变量。

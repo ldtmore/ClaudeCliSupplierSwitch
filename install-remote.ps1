@@ -33,10 +33,11 @@ try {
     [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
 } catch { }
 
-# 候选源：指定地址优先；GitHub raw 自动追加 jsDelivr 镜像作回退（国内网络友好）
+# 候选源：指定地址优先；GitHub raw 自动追加 jsDelivr 镜像作回退（国内网络友好），
+# 镜像沿用 $Base 里的同一 ref（分支/tag），避免固定 @main 造成版本错位
 $bases = @($Base)
-if ($Base -match '^https://raw\.githubusercontent\.com/([^/]+)/([^/]+)') {
-    $bases += ('https://cdn.jsdelivr.net/gh/' + $Matches[1] + '/' + $Matches[2] + '@main')
+if ($Base -match '^https://raw\.githubusercontent\.com/([^/]+)/([^/]+)/([^/]+)/?$') {
+    $bases += ('https://cdn.jsdelivr.net/gh/' + $Matches[1] + '/' + $Matches[2] + '@' + $Matches[3])
 }
 
 $files = @('install.ps1', 'claude-menu.ps1', 'claude-menu.sh', 'suppliers.help.md', 'suppliers.template.json')
@@ -64,13 +65,14 @@ if (-not $okBase) {
     Write-Host '  ✘ 所有下载源均不可用。请检查网络，或改用镜像地址执行：' -ForegroundColor Red
     Write-Host '    irm https://cdn.jsdelivr.net/gh/ldtmore/Win_Claude_Cli_Supplier_Switch@main/install-remote.ps1 | iex' -ForegroundColor Yellow
     Remove-Item -Path $tmp -Recurse -Force -ErrorAction SilentlyContinue
-    exit 1
+    # return 而非 exit：irm | iex 场景下 exit 会直接关掉用户当前的 PowerShell 会话
+    return
 }
 Write-Ok ('文件下载完成（源: ' + $okBase + '）')
 
-# 校验下载的 install.ps1 存在
+# 校验下载的 install.ps1 存在（return 同上，且先清理临时目录）
 $localInstall = Join-Path $tmp 'install.ps1'
-if (-not (Test-Path $localInstall)) { Write-Host '  ✘ 下载内容不完整' -ForegroundColor Red; exit 1 }
+if (-not (Test-Path $localInstall)) { Write-Host '  ✘ 下载内容不完整' -ForegroundColor Red; Remove-Item -Path $tmp -Recurse -Force -ErrorAction SilentlyContinue; return }
 
 # 以脚本块方式执行安装器：不受本地执行策略限制，且无需落盘运行脚本文件
 $code = Get-Content -Path $localInstall -Raw

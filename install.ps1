@@ -80,20 +80,18 @@ fi
 function Add-MenuMount {
     param([string]$Path, [string]$Block, [string]$Marker, [switch]$IsBash)
     if ($IsBash) { $Block = $Block -replace "`r", "" }
+    $enc = New-Object System.Text.UTF8Encoding(-not $IsBash.IsPresent)
+    $nl = if ($IsBash) { "`n" } else { "`r`n" }
     if (Test-Path $Path) {
         $raw = [System.IO.File]::ReadAllText($Path)
         if ($raw -match [regex]::Escape($Marker)) { Write-Skip ($Path + ' 已挂载'); return }
         Copy-Item -Path $Path -Destination ($Path + '.bak-' + $stamp)
         Write-Step ('已备份原文件 -> ' + [System.IO.Path]::GetFileName($Path) + '.bak-' + $stamp)
-        $enc = New-Object System.Text.UTF8Encoding(-not $IsBash.IsPresent)
-        $nl = if ($IsBash) { "`n" } else { "`r`n" }
         [System.IO.File]::AppendAllText($Path, $nl + $Block + $nl, $enc)
         Write-Ok ('已挂载 -> ' + $Path)
     } else {
         $dir = Split-Path -Parent $Path
         if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Path $dir | Out-Null }
-        $enc = New-Object System.Text.UTF8Encoding(-not $IsBash.IsPresent)
-        $nl = if ($IsBash) { "`n" } else { "`r`n" }
         [System.IO.File]::WriteAllText($Path, $Block + $nl, $enc)
         Write-Ok ('已创建并挂载 -> ' + $Path)
     }
@@ -106,6 +104,11 @@ if ($SkipBash) {
     Write-Skip '已按参数 -SkipBash 跳过 Git Bash'
 } else {
     Add-MenuMount -Path (Join-Path $HOME '.bashrc') -Block $bashBlock -Marker 'claude-menu.sh' -IsBash
+    # Git Bash 优先加载 .bash_profile：若它存在且未引用 .bashrc，上面的挂载不会生效
+    $bashProfile = Join-Path $HOME '.bash_profile'
+    if ((Test-Path $bashProfile) -and -not ((Get-Content $bashProfile -Raw -ErrorAction SilentlyContinue) -match '\.bashrc')) {
+        Write-Warn2 ('~\.bash_profile 存在但未加载 .bashrc，Git Bash 端菜单不会生效；请在 .bash_profile 里补一行: test -f ~/.bashrc && . ~/.bashrc')
+    }
 }
 Write-Host ''
 

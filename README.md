@@ -6,7 +6,7 @@ Claude Code**，不同终端窗口可同时运行不同账号。
 
 ![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11-blue)
 ![Shell](https://img.shields.io/badge/shell-PowerShell%205.1%20%7C%207%20%7C%20Git%20Bash-5391FE)
-![Version](https://img.shields.io/badge/version-v1.4-green)
+![Version](https://img.shields.io/badge/version-v1.4.1-green)
 ![License](https://img.shields.io/badge/license-MIT-orange)
 
 ## 一句话安装
@@ -114,4 +114,4 @@ powershell -ExecutionPolicy Bypass -File .\install.ps1
 
 ---
 
-方案版本 v1.4 · 2026-08 · 纯配置 + 脚本，无第三方依赖
+方案版本 v1.4.1 · 2026-09 · 纯配置 + 脚本，无第三方依赖
