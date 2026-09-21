@@ -3,18 +3,18 @@
 #  适用: Windows 10/11 · PowerShell 5.1 / PowerShell 7
 #
 #  用户只需在 PowerShell 执行一句:
-#      irm https://raw.githubusercontent.com/ldtmore/Win_Claude_Cli_Supplier_Switch/main/install-remote.ps1 | iex
+#      irm https://raw.githubusercontent.com/ldtmore/ClaudeCliSupplierSwitch/main/install-remote.ps1 | iex
 #
 #  中国大陆网络无法访问 raw.githubusercontent.com 时，自动回退 jsDelivr 镜像，
 #  也可直接使用镜像地址执行:
-#      irm https://cdn.jsdelivr.net/gh/ldtmore/Win_Claude_Cli_Supplier_Switch@main/install-remote.ps1 | iex
+#      irm https://cdn.jsdelivr.net/gh/ldtmore/ClaudeCliSupplierSwitch@main/install-remote.ps1 | iex
 #
 #  原理: 从仓库下载全部文件到临时目录 → 以脚本块方式执行 install.ps1
 #  （绕过本地执行策略限制）→ 幂等部署，与本地安装完全等效
 # ============================================================================
 param(
     # 仓库原始文件基地址（默认即本仓库官方地址；fork 后可指向自己的仓库）
-    [string]$Base = 'https://raw.githubusercontent.com/ldtmore/Win_Claude_Cli_Supplier_Switch/main',
+    [string]$Base = 'https://raw.githubusercontent.com/ldtmore/ClaudeCliSupplierSwitch/main',
     [switch]$SkipBash
 )
 
@@ -63,7 +63,7 @@ foreach ($b in $bases) {
 if (-not $okBase) {
     Write-Host ''
     Write-Host '  ✘ 所有下载源均不可用。请检查网络，或改用镜像地址执行：' -ForegroundColor Red
-    Write-Host '    irm https://cdn.jsdelivr.net/gh/ldtmore/Win_Claude_Cli_Supplier_Switch@main/install-remote.ps1 | iex' -ForegroundColor Yellow
+    Write-Host '    irm https://cdn.jsdelivr.net/gh/ldtmore/ClaudeCliSupplierSwitch@main/install-remote.ps1 | iex' -ForegroundColor Yellow
     Remove-Item -Path $tmp -Recurse -Force -ErrorAction SilentlyContinue
     # return 而非 exit：irm | iex 场景下 exit 会直接关掉用户当前的 PowerShell 会话
     return
@@ -81,5 +81,5 @@ if ($SkipBash) { & $sb -SrcDir $tmp -SkipBash } else { & $sb -SrcDir $tmp }
 
 Remove-Item -Path $tmp -Recurse -Force -ErrorAction SilentlyContinue
 
-Write-Host '  远程卸载（日后需要时执行）: irm https://raw.githubusercontent.com/ldtmore/Win_Claude_Cli_Supplier_Switch/main/uninstall.ps1 | iex' -ForegroundColor DarkGray
+Write-Host '  远程卸载（日后需要时执行）: irm https://raw.githubusercontent.com/ldtmore/ClaudeCliSupplierSwitch/main/uninstall.ps1 | iex' -ForegroundColor DarkGray
 Write-Host ''

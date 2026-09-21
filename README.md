@@ -1,6 +1,6 @@
 # Claude Code 多供应商切换工具（ccs）
 
-**Win_Claude_Cli_Supplier_Switch** · 一个纯脚本、零安装、零常驻进程的 Windows 终端方案：
+**ClaudeCliSupplierSwitch** · 一个纯脚本、零安装、零常驻进程的 Windows 终端方案：
 在多个大模型供应商（智谱 GLM / DeepSeek / Kimi / 官方 Anthropic …）之间**一条命令切换
 Claude Code**，不同终端窗口可同时运行不同账号。
 
@@ -14,11 +14,11 @@ Claude Code**，不同终端窗口可同时运行不同账号。
 在 PowerShell 里执行（无需下载任何文件）：
 
 ```powershell
-irm https://raw.githubusercontent.com/ldtmore/Win_Claude_Cli_Supplier_Switch/main/install-remote.ps1 | iex
+irm https://raw.githubusercontent.com/ldtmore/ClaudeCliSupplierSwitch/main/install-remote.ps1 | iex
 ```
 
 > 大陆网络访问 GitHub raw 受限时会自动回退 jsDelivr 镜像，也可以直接用镜像地址：
-> `irm https://cdn.jsdelivr.net/gh/ldtmore/Win_Claude_Cli_Supplier_Switch@main/install-remote.ps1 | iex`
+> `irm https://cdn.jsdelivr.net/gh/ldtmore/ClaudeCliSupplierSwitch@main/install-remote.ps1 | iex`
 >
 > 安装后编辑 `%USERPROFILE%\.claude\suppliers.json` 填入你的 API Key，新开终端输入 `ccs`。
 > 前置条件：已安装 [Node.js](https://nodejs.org) 和
