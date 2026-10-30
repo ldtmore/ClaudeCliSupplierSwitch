@@ -4,7 +4,7 @@
 #  数据文件: ~\.claude\suppliers.json   格式说明: ~\.claude\suppliers.help.md
 # ============================================================================
 
-$script:ClaudeMenuVersion = 'v1.4.1'
+$script:ClaudeMenuVersion = 'v1.4.2'
 $script:ClaudeMenuDataFile = Join-Path $HOME '.claude\suppliers.json'
 $script:ClaudeMenuLastFile = Join-Path $HOME '.claude\.supplier-last'
 # 基础清理列表：official 入口启动前要清掉的环境变量。
@@ -176,7 +176,7 @@ function Show-ClaudeSupplierStatus {
     # 上次使用（.supplier-last 新格式为 "名字<TAB>时间"，兼容旧的纯名字格式）
     $last = $null; $lastTime = ''
     if (Test-Path $script:ClaudeMenuLastFile) {
-        $raw = Get-Content $script:ClaudeMenuLastFile -Raw -ErrorAction SilentlyContinue
+        $raw = Get-Content $script:ClaudeMenuLastFile -Raw -Encoding UTF8 -ErrorAction SilentlyContinue
         if ($raw) {
             $parts = $raw.Trim() -split "`t", 2
             $last = Find-ClaudeSupplierKey -List $List -Name $parts[0]
@@ -266,7 +266,7 @@ function Claude-Supplier {
 
     $last = $null
     if (Test-Path $script:ClaudeMenuLastFile) {
-        $raw = Get-Content $script:ClaudeMenuLastFile -Raw -ErrorAction SilentlyContinue
+        $raw = Get-Content $script:ClaudeMenuLastFile -Raw -Encoding UTF8 -ErrorAction SilentlyContinue
         if ($raw) { $last = Find-ClaudeSupplierKey -List $list -Name ($raw.Trim() -split "`t")[0] }
     }
 
@@ -359,7 +359,8 @@ function Claude-Supplier {
         return
     }
 
-    try { Set-Content -Path $script:ClaudeMenuLastFile -Value ($sel + "`t" + (Get-Date -Format 'yyyy-MM-dd HH:mm')) -Encoding ASCII -ErrorAction Stop } catch { }
+    # 写 UTF-8：供应商名允许非 ASCII（如中文名），用 ASCII 会把字符写成 '?' 导致"上次使用"失效
+    try { Set-Content -Path $script:ClaudeMenuLastFile -Value ($sel + "`t" + (Get-Date -Format 'yyyy-MM-dd HH:mm')) -Encoding UTF8 -ErrorAction Stop } catch { }
 
     if ($sel -eq 'official') {
         Clear-ClaudeMenuEnv -List $list

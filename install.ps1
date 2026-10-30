@@ -62,36 +62,44 @@ Write-Host ''
 # ---------- 挂载三个终端的 Profile ----------
 Write-Host '[3/4] 挂载终端 Profile（PS7 / PS5.1 / Git Bash）' -ForegroundColor Cyan
 
+# 挂载块本身纯 ASCII：追加进任何编码的用户配置都不会产生编码混写或乱码
+# （中文提示全部在 claude-menu.ps1 / claude-menu.sh 内，配置文件里只留一行 ASCII 加载语句）
 $psBlock = @'
-# ---------- Claude Code 供应商菜单 (ccs / Claude-Supplier) ----------
+# ---------- Claude Code supplier menu (ccs / Claude-Supplier) ----------
 if (Test-Path "$HOME\.claude\claude-menu.ps1") { . "$HOME\.claude\claude-menu.ps1" }
 '@
 
 # .bashrc 必须用 LF 换行（CRLF 会导致 bash 把 \r 当命令的一部分）
 $bashBlock = (@'
-# ---------- Claude Code 供应商菜单 (ccs / claude-supplier) ----------
+# ---------- Claude Code supplier menu (ccs / claude-supplier) ----------
 if [ -f "$HOME/.claude/claude-menu.sh" ]; then
     . "$HOME/.claude/claude-menu.sh"
 fi
 '@) -replace "`r", ""
 
 # 向一个 shell 配置文件末尾追加菜单挂载块（已挂载则跳过；追加前自动备份）
-# PS Profile 用带 BOM 的 UTF-8 写入（PS5.1 中文需要），.bashrc 用无 BOM UTF-8 + LF
+# 追加编码跟随文件既有 BOM：UTF-16 Profile 按 UTF-16 追加，避免混写炸掉整个文件；
+# 无 BOM 文件按 Latin-1 追加纯 ASCII 块，等价于原样字节追加，GBK/UTF-8 均安全。
+# 新建文件：PS Profile 用带 BOM 的 UTF-8（PS5.1 中文友好），.bashrc 用无 BOM UTF-8 + LF
 function Add-MenuMount {
     param([string]$Path, [string]$Block, [string]$Marker, [switch]$IsBash)
     if ($IsBash) { $Block = $Block -replace "`r", "" }
-    $enc = New-Object System.Text.UTF8Encoding(-not $IsBash.IsPresent)
     $nl = if ($IsBash) { "`n" } else { "`r`n" }
     if (Test-Path $Path) {
         $raw = [System.IO.File]::ReadAllText($Path)
         if ($raw -match [regex]::Escape($Marker)) { Write-Skip ($Path + ' 已挂载'); return }
         Copy-Item -Path $Path -Destination ($Path + '.bak-' + $stamp)
         Write-Step ('已备份原文件 -> ' + [System.IO.Path]::GetFileName($Path) + '.bak-' + $stamp)
+        $bytes = [System.IO.File]::ReadAllBytes($Path)
+        $enc = [System.Text.Encoding]::GetEncoding(28591)   # Latin-1：字节透明，纯 ASCII 块等于原样字节追加
+        if ($bytes.Length -ge 2 -and $bytes[0] -eq 0xFF -and $bytes[1] -eq 0xFE) { $enc = [System.Text.Encoding]::Unicode }
+        elseif ($bytes.Length -ge 2 -and $bytes[0] -eq 0xFE -and $bytes[1] -eq 0xFF) { $enc = [System.Text.Encoding]::BigEndianUnicode }
         [System.IO.File]::AppendAllText($Path, $nl + $Block + $nl, $enc)
         Write-Ok ('已挂载 -> ' + $Path)
     } else {
         $dir = Split-Path -Parent $Path
         if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Path $dir | Out-Null }
+        $enc = New-Object System.Text.UTF8Encoding(-not $IsBash.IsPresent)
         [System.IO.File]::WriteAllText($Path, $Block + $nl, $enc)
         Write-Ok ('已创建并挂载 -> ' + $Path)
     }

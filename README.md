@@ -6,7 +6,7 @@ Claude Code**，不同终端窗口可同时运行不同账号。
 
 ![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11-blue)
 ![Shell](https://img.shields.io/badge/shell-PowerShell%205.1%20%7C%207%20%7C%20Git%20Bash-5391FE)
-![Version](https://img.shields.io/badge/version-v1.4.1-green)
+![Version](https://img.shields.io/badge/version-v1.4.2-green)
 ![License](https://img.shields.io/badge/license-MIT-orange)
 
 ## 一句话安装
@@ -77,6 +77,7 @@ powershell -ExecutionPolicy Bypass -File .\install.ps1
 | `install.ps1` | 本地一键部署脚本（幂等，重复运行安全） |
 | `install-remote.ps1` | 远程一键部署引导（从本仓库下载后调用 install.ps1） |
 | `uninstall.ps1` | 一键卸载脚本（默认保留你的 suppliers.json） |
+| `uninstall-remote.ps1` | 远程一键卸载引导（纯 ASCII 无 BOM，供 `irm \| iex` 调用 uninstall.ps1） |
 | `claude-menu.ps1` | 菜单逻辑（PowerShell 5.1/7 共用，含 Tab 补全） |
 | `claude-menu.sh` | 菜单逻辑（Git Bash 版，经 node 解析 JSON） |
 | `suppliers.template.json` | 供应商配置模板（部署时自动复制为 suppliers.json） |
@@ -114,4 +115,4 @@ powershell -ExecutionPolicy Bypass -File .\install.ps1
 
 ---
 
-方案版本 v1.4.1 · 2026-09 · 纯配置 + 脚本，无第三方依赖
+方案版本 v1.4.2 · 2026-10 · 纯配置 + 脚本，无第三方依赖

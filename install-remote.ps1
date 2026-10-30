@@ -1,6 +1,9 @@
-﻿# ============================================================================
+# ============================================================================
 #  install-remote.ps1 - Claude Code 多供应商切换工具（ccs）远程一键部署
 #  适用: Windows 10/11 · PowerShell 5.1 / PowerShell 7
+#  执行契约: 本文件必须经 irm|iex 远程执行（字节按 HTTP charset=utf-8 解码后再解析，
+#            无 BOM 也安全）；不可本地 -File 运行——无 BOM 中文会被 PS5.1 按 ANSI 误读
+#            而报语法错。本地安装请用带 BOM 的 install.ps1。
 #
 #  用户只需在 PowerShell 执行一句:
 #      irm https://raw.githubusercontent.com/ldtmore/ClaudeCliSupplierSwitch/main/install-remote.ps1 | iex
@@ -75,11 +78,12 @@ $localInstall = Join-Path $tmp 'install.ps1'
 if (-not (Test-Path $localInstall)) { Write-Host '  ✘ 下载内容不完整' -ForegroundColor Red; Remove-Item -Path $tmp -Recurse -Force -ErrorAction SilentlyContinue; return }
 
 # 以脚本块方式执行安装器：不受本地执行策略限制，且无需落盘运行脚本文件
-$code = Get-Content -Path $localInstall -Raw
+# 显式按 UTF-8 解码：不依赖 Get-Content 的 BOM 嗅探，install.ps1 无论带不带 BOM 都能正确读取
+$code = Get-Content -Path $localInstall -Raw -Encoding UTF8
 $sb = [scriptblock]::Create($code)
 if ($SkipBash) { & $sb -SrcDir $tmp -SkipBash } else { & $sb -SrcDir $tmp }
 
 Remove-Item -Path $tmp -Recurse -Force -ErrorAction SilentlyContinue
 
-Write-Host '  远程卸载（日后需要时执行）: irm https://raw.githubusercontent.com/ldtmore/ClaudeCliSupplierSwitch/main/uninstall.ps1 | iex' -ForegroundColor DarkGray
+Write-Host '  远程卸载（日后需要时执行）: irm https://raw.githubusercontent.com/ldtmore/ClaudeCliSupplierSwitch/main/uninstall-remote.ps1 | iex' -ForegroundColor DarkGray
 Write-Host ''

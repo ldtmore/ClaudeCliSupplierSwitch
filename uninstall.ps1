@@ -23,12 +23,27 @@ Write-Host ''
 # 挂载块固定追加在文件末尾（PS 2 行 / bash 4 行）。仅当标记出现在最后 6 行内才自动移除，
 # 否则说明文件结构有变，提示手动处理，避免误删其他内容。
 function Remove-MenuMount {
-    param([string]$Path, [string]$Marker, [switch]$IsBash)
+    param([string]$Path, [string[]]$Marker, [switch]$IsBash)
     if (-not (Test-Path $Path)) { Write-Skip ($Path + ' 不存在'); return }
-    $lines = [System.IO.File]::ReadAllLines($Path)
+    $bytes = [System.IO.File]::ReadAllBytes($Path)
+    # 读写编码跟随文件自身 BOM；无 BOM 时用 Latin-1（1 字节=1 字符）做无损往返：
+    # ASCII 挂载标记在任何编码下都能匹配，未改动行按原字节写回，GBK/UTF-8 内容都不会被转码损坏
+    $skip = 0
+    $enc = [System.Text.Encoding]::GetEncoding(28591)
+    if ($bytes.Length -ge 3 -and $bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $bytes[2] -eq 0xBF) {
+        $enc = New-Object System.Text.UTF8Encoding($true); $skip = 3      # 重写时保留 BOM
+    } elseif ($bytes.Length -ge 2 -and $bytes[0] -eq 0xFF -and $bytes[1] -eq 0xFE) {
+        $enc = [System.Text.Encoding]::Unicode; $skip = 2
+    } elseif ($bytes.Length -ge 2 -and $bytes[0] -eq 0xFE -and $bytes[1] -eq 0xFF) {
+        $enc = [System.Text.Encoding]::BigEndianUnicode; $skip = 2
+    }
+    $lines = $enc.GetString($bytes, $skip, $bytes.Length - $skip) -split "`n"
     $idx = -1
     for ($i = 0; $i -lt $lines.Count; $i++) {
-        if ($lines[$i] -match [regex]::Escape($Marker)) { $idx = $i; break }
+        foreach ($m in $Marker) {
+            if ($lines[$i] -match [regex]::Escape($m)) { $idx = $i; break }
+        }
+        if ($idx -ge 0) { break }
     }
     if ($idx -lt 0) { Write-Skip ($Path + ' 未挂载'); return }
     if ($idx -lt $lines.Count - 6) {
@@ -37,9 +52,15 @@ function Remove-MenuMount {
     }
     Copy-Item -Path $Path -Destination ($Path + '.bak-' + $stamp)
     $keep = @()
-    if ($idx -gt 0) { $keep = $lines[0..($idx - 1)] }
-    $enc = New-Object System.Text.UTF8Encoding(-not $IsBash.IsPresent)
-    # .bashrc 必须保持 LF：WriteAllLines 会统一写 CRLF，导致 bash 把 \r 当命令的一部分
+    if ($idx -gt 0) { $keep = @($lines[0..($idx - 1)]) }
+    # 去掉按 \n 切分后残留的行尾 \r，再按目标换行符重写：
+    # .bashrc 必须保持 LF（CRLF 会导致 bash 把 \r 当命令的一部分），其余统一 CRLF
+    $keep = @($keep | ForEach-Object { $_ -replace "`r$", '' })
+    # 去掉切分产生的末尾空元素，文件末尾规范为单个换行（与旧版 ReadAllLines 行为一致，
+    # 否则卸载后会在文件末尾多出一个空行）
+    while ($keep.Count -gt 0 -and $keep[-1] -eq '') {
+        if ($keep.Count -eq 1) { $keep = @() } else { $keep = @($keep[0..($keep.Count - 2)]) }
+    }
     if ($IsBash) {
         [System.IO.File]::WriteAllText($Path, (($keep -join "`n") + "`n"), $enc)
     } else {
@@ -49,9 +70,11 @@ function Remove-MenuMount {
 }
 
 $doc = [Environment]::GetFolderPath('MyDocuments')
-Remove-MenuMount -Path (Join-Path $doc 'PowerShell\Microsoft.PowerShell_profile.ps1') -Marker '# ---------- Claude Code 供应商菜单' 
-Remove-MenuMount -Path (Join-Path $doc 'WindowsPowerShell\Microsoft.PowerShell_profile.ps1') -Marker '# ---------- Claude Code 供应商菜单'
-Remove-MenuMount -Path (Join-Path $HOME '.bashrc') -Marker '# ---------- Claude Code 供应商菜单' -IsBash
+# 新旧两种标记都识别：新版挂载块注释为 ASCII，v1.4.2 之前为中文注释
+$ccsMarkers = @('Claude Code supplier menu', 'Claude Code 供应商菜单')
+Remove-MenuMount -Path (Join-Path $doc 'PowerShell\Microsoft.PowerShell_profile.ps1') -Marker $ccsMarkers
+Remove-MenuMount -Path (Join-Path $doc 'WindowsPowerShell\Microsoft.PowerShell_profile.ps1') -Marker $ccsMarkers
+Remove-MenuMount -Path (Join-Path $HOME '.bashrc') -Marker $ccsMarkers -IsBash
 
 # ---------- 删除菜单脚本 ----------
 foreach ($f in @('claude-menu.ps1', 'claude-menu.sh', 'suppliers.help.md')) {

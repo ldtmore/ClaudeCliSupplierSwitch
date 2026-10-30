@@ -5,7 +5,7 @@
 #            JSON 可随意折行，值里可以出现英文双引号
 # ============================================================================
 
-_CLAUDE_MENU_VERSION="v1.4.1"
+_CLAUDE_MENU_VERSION="v1.4.2"
 _CLAUDE_MENU_DATA="$HOME/.claude/suppliers.json"
 _CLAUDE_MENU_LAST="$HOME/.claude/.supplier-last"
 # 基础清理列表：official 入口启动前要清掉的环境变量。
@@ -20,7 +20,7 @@ _claude_menu_entries() {
     node -e '
       const fs = require("fs");
       let j;
-      try { j = JSON.parse(fs.readFileSync(process.argv[1], "utf8")); }
+      try { j = JSON.parse(fs.readFileSync(process.argv[1], "utf8").replace(/^\uFEFF/, "")); }
       catch (e) { console.error("  ✘ suppliers.json 解析失败: " + e.message); process.exit(1); }
       const clean = s => String(s).replace(/[\t\r\n]+/g, " ");
       const out = [];
@@ -83,7 +83,7 @@ _claude_menu_official_login() {
     node -e '
       const fs = require("fs");
       try {
-        const j = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+        const j = JSON.parse(fs.readFileSync(process.argv[1], "utf8").replace(/^\uFEFF/, ""));
         if (j.oauthAccount && j.oauthAccount.emailAddress) { console.log(j.oauthAccount.emailAddress); process.exit(0); }
       } catch (e) {}
       process.exit(1);
@@ -106,7 +106,7 @@ _claude_menu_env_summary() {
     node -e '
       const fs = require("fs");
       let j;
-      try { j = JSON.parse(fs.readFileSync(process.argv[1], "utf8")); }
+      try { j = JSON.parse(fs.readFileSync(process.argv[1], "utf8").replace(/^\uFEFF/, "")); }
       catch (e) { process.exit(1); }
       for (const k of Object.keys(j)) {
         if (k === "official") continue;
@@ -121,7 +121,7 @@ _claude_menu_env_pairs() {
     node -e '
       const fs = require("fs");
       let j;
-      try { j = JSON.parse(fs.readFileSync(process.argv[1], "utf8")); }
+      try { j = JSON.parse(fs.readFileSync(process.argv[1], "utf8").replace(/^\uFEFF/, "")); }
       catch (e) { process.exit(1); }
       let e = {};
       for (const k of Object.keys(j)) {
@@ -140,7 +140,7 @@ _claude_menu_env_names() {
     node -e '
       const fs = require("fs");
       let j;
-      try { j = JSON.parse(fs.readFileSync(process.argv[1], "utf8")); }
+      try { j = JSON.parse(fs.readFileSync(process.argv[1], "utf8").replace(/^\uFEFF/, "")); }
       catch (e) { process.exit(1); }
       const names = new Set();
       for (const k of Object.keys(j)) {
