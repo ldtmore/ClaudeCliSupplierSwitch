@@ -9,12 +9,16 @@ Claude Code**，不同终端窗口可同时运行不同账号。
 ![Version](https://img.shields.io/badge/version-v1.4.2-green)
 ![License](https://img.shields.io/badge/license-MIT-orange)
 
-## 一句话安装
+## 一句话安装 / 一句话卸载
 
 在 PowerShell 里执行（无需下载任何文件）：
 
 ```powershell
+# 安装
 irm https://raw.githubusercontent.com/ldtmore/ClaudeCliSupplierSwitch/main/install-remote.ps1 | iex
+
+# 卸载（自动清理三端挂载，默认保留你的 suppliers.json 与 API Key）
+irm https://raw.githubusercontent.com/ldtmore/ClaudeCliSupplierSwitch/main/uninstall-remote.ps1 | iex
 ```
 
 > 大陆网络访问 GitHub raw 受限时会自动回退 jsDelivr 镜像，也可以直接用镜像地址：
