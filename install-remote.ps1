@@ -5,19 +5,18 @@
 #            无 BOM 也安全）；不可本地 -File 运行——无 BOM 中文会被 PS5.1 按 ANSI 误读
 #            而报语法错。本地安装请用带 BOM 的 install.ps1。
 #
-#  用户只需在 PowerShell 执行一句:
-#      irm https://raw.githubusercontent.com/ldtmore/ClaudeCliSupplierSwitch/main/install-remote.ps1 | iex
-#
-#  中国大陆网络无法访问 raw.githubusercontent.com 时，自动回退 jsDelivr 镜像，
-#  也可直接使用镜像地址执行:
+#  用户只需在 PowerShell 执行一句（默认走 jsDelivr CDN，大陆直连可用）:
 #      irm https://cdn.jsdelivr.net/gh/ldtmore/ClaudeCliSupplierSwitch@main/install-remote.ps1 | iex
+#
+#  能直连 GitHub 的用户可用官方源（与 CDN 源内容相同、互为回退）:
+#      irm https://raw.githubusercontent.com/ldtmore/ClaudeCliSupplierSwitch/main/install-remote.ps1 | iex
 #
 #  原理: 从仓库下载全部文件到临时目录 → 以脚本块方式执行 install.ps1
 #  （绕过本地执行策略限制）→ 幂等部署，与本地安装完全等效
 # ============================================================================
 param(
-    # 仓库原始文件基地址（默认即本仓库官方地址；fork 后可指向自己的仓库）
-    [string]$Base = 'https://raw.githubusercontent.com/ldtmore/ClaudeCliSupplierSwitch/main',
+    # 仓库文件基地址（默认 jsDelivr CDN，大陆直连可用；fork 后可指向自己的仓库）
+    [string]$Base = 'https://cdn.jsdelivr.net/gh/ldtmore/ClaudeCliSupplierSwitch@main',
     [switch]$SkipBash
 )
 
@@ -36,11 +35,14 @@ try {
     [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
 } catch { }
 
-# 候选源：指定地址优先；GitHub raw 自动追加 jsDelivr 镜像作回退（国内网络友好），
-# 镜像沿用 $Base 里的同一 ref（分支/tag），避免固定 @main 造成版本错位
+# 候选源：jsDelivr CDN 与 GitHub raw 互为回退（CDN 大陆友好、raw 为官方源），
+# 回退沿用 $Base 里的同一 ref（分支/tag），避免固定 @main 造成版本错位
 $bases = @($Base)
 if ($Base -match '^https://raw\.githubusercontent\.com/([^/]+)/([^/]+)/([^/]+)/?$') {
     $bases += ('https://cdn.jsdelivr.net/gh/' + $Matches[1] + '/' + $Matches[2] + '@' + $Matches[3])
+}
+elseif ($Base -match '^https://cdn\.jsdelivr\.net/gh/([^/]+)/([^/]+)@([^/]+)/?$') {
+    $bases += ('https://raw.githubusercontent.com/' + $Matches[1] + '/' + $Matches[2] + '/' + $Matches[3])
 }
 
 $files = @('install.ps1', 'claude-menu.ps1', 'claude-menu.sh', 'suppliers.help.md', 'suppliers.template.json')
@@ -85,5 +87,5 @@ if ($SkipBash) { & $sb -SrcDir $tmp -SkipBash } else { & $sb -SrcDir $tmp }
 
 Remove-Item -Path $tmp -Recurse -Force -ErrorAction SilentlyContinue
 
-Write-Host '  远程卸载（日后需要时执行）: irm https://raw.githubusercontent.com/ldtmore/ClaudeCliSupplierSwitch/main/uninstall-remote.ps1 | iex' -ForegroundColor DarkGray
+Write-Host '  远程卸载（日后需要时执行）: irm https://cdn.jsdelivr.net/gh/ldtmore/ClaudeCliSupplierSwitch@main/uninstall-remote.ps1 | iex' -ForegroundColor DarkGray
 Write-Host ''

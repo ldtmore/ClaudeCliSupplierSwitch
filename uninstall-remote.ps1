@@ -1,8 +1,8 @@
 # ============================================================================
 #  uninstall-remote.ps1 - Claude Code supplier switcher (ccs) remote uninstall
 #
-#  Run with a single command:
-#      irm https://raw.githubusercontent.com/ldtmore/ClaudeCliSupplierSwitch/main/uninstall-remote.ps1 | iex
+#  Run with a single command (jsDelivr CDN, reachable from mainland China):
+#      irm https://cdn.jsdelivr.net/gh/ldtmore/ClaudeCliSupplierSwitch@main/uninstall-remote.ps1 | iex
 #
 #  WHY THIS FILE EXISTS (and why it is ASCII-only, no BOM):
 #  This file is executed via `irm | iex`. A UTF-8 BOM would glue an invisible
@@ -19,10 +19,11 @@ try {
     [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
 } catch { }
 
-# Candidate sources: GitHub raw first, jsDelivr mirror as fallback (CN friendly)
+# Candidate sources: jsDelivr CDN first (reachable from mainland China, serves the
+# exact repository content), GitHub raw as fallback
 $urls = @(
-    'https://raw.githubusercontent.com/ldtmore/ClaudeCliSupplierSwitch/main/uninstall.ps1',
-    'https://cdn.jsdelivr.net/gh/ldtmore/ClaudeCliSupplierSwitch@main/uninstall.ps1'
+    'https://cdn.jsdelivr.net/gh/ldtmore/ClaudeCliSupplierSwitch@main/uninstall.ps1',
+    'https://raw.githubusercontent.com/ldtmore/ClaudeCliSupplierSwitch/main/uninstall.ps1'
 )
 
 $code = $null

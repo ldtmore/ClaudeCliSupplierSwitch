@@ -11,18 +11,21 @@ Claude Code**，不同终端窗口可同时运行不同账号。
 
 ## 一句话安装 / 一句话卸载
 
-在 PowerShell 里执行（无需下载任何文件）：
+在 PowerShell 里执行（无需下载任何文件；默认走 jsDelivr CDN，大陆直连可用）：
 
 ```powershell
 # 安装
-irm https://raw.githubusercontent.com/ldtmore/ClaudeCliSupplierSwitch/main/install-remote.ps1 | iex
+irm https://cdn.jsdelivr.net/gh/ldtmore/ClaudeCliSupplierSwitch@main/install-remote.ps1 | iex
 
 # 卸载（自动清理三端挂载，默认保留你的 suppliers.json 与 API Key）
-irm https://raw.githubusercontent.com/ldtmore/ClaudeCliSupplierSwitch/main/uninstall-remote.ps1 | iex
+irm https://cdn.jsdelivr.net/gh/ldtmore/ClaudeCliSupplierSwitch@main/uninstall-remote.ps1 | iex
 ```
 
-> 大陆网络访问 GitHub raw 受限时会自动回退 jsDelivr 镜像，也可以直接用镜像地址：
-> `irm https://cdn.jsdelivr.net/gh/ldtmore/ClaudeCliSupplierSwitch@main/install-remote.ps1 | iex`
+> 能直连 GitHub 的用户也可用官方源（两源内容相同、互为回退）：
+> `irm https://raw.githubusercontent.com/ldtmore/ClaudeCliSupplierSwitch/main/install-remote.ps1 | iex`
+> jsDelivr 缓存最长 12~24 小时；发布新版本后可访问
+> [purge.jsdelivr.net/gh/ldtmore/ClaudeCliSupplierSwitch@main/install-remote.ps1](https://purge.jsdelivr.net/gh/ldtmore/ClaudeCliSupplierSwitch@main/install-remote.ps1)
+> 强制刷新缓存。
 >
 > 安装后编辑 `%USERPROFILE%\.claude\suppliers.json` 填入你的 API Key，新开终端输入 `ccs`。
 > 前置条件：已安装 [Node.js](https://nodejs.org) 和
@@ -111,7 +114,7 @@ powershell -ExecutionPolicy Bypass -File .\install.ps1
 
 - `suppliers.json` 内是**明文 API Key**：不要提交到 git、不要截图外发、不要放进网盘同步
   目录（本仓库 `.gitignore` 已做防御性排除）
-- 远程安装脚本只从本仓库官方地址下载文件，不执行任何第三方代码
+- 远程安装脚本只从本仓库官方地址及其官方 CDN 镜像（jsDelivr，内容与仓库完全一致）下载文件，不执行任何第三方代码
 
 ## License
 
