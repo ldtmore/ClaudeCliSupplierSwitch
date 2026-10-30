@@ -1,0 +1,39 @@
+# 编码守护：.ps1 的 BOM 构形与执行方式强相关，写错会直接打在最终用户脸上——
+#   远程入口（irm|iex 执行）必须无 BOM：BOM 字符会粘住首行 `#` 使其变成幽灵命令报错，
+#   并让 param 块失效、默认值被污染（v1.4.2 修复的线上故障）
+#   本地脚本（-File / dot-source 执行）必须带 BOM：PS5.1 无 BOM 会按 ANSI 误读 UTF-8 中文，
+#   轻则乱码、重则吞引号破坏语句结构（且 exit 0 静默出错）
+# Windows 工具链容易悄悄写回 BOM（如 PS5.1 Out-File 默认带 BOM），push 时自动校验防回归
+name: check-encoding
+
+on: [push, pull_request]
+
+jobs:
+  bom:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 校验 .ps1 的 BOM 构形
+        shell: pwsh
+        run: |
+          $remoteEntries = @('install-remote.ps1', 'uninstall-remote.ps1')      # irm|iex 执行，禁止 BOM
+          $localScripts  = @('install.ps1', 'uninstall.ps1', 'claude-menu.ps1') # -File/dot-source 执行，必须带 BOM
+          foreach ($f in $remoteEntries) {
+            $b = [System.IO.File]::ReadAllBytes($f)
+            if ($b.Length -ge 3 -and $b[0] -eq 0xEF -and $b[1] -eq 0xBB -and $b[2] -eq 0xBF) {
+              throw "$f 不应带 BOM（远程 irm|iex 场景，BOM 会破坏 iex 解析）"
+            }
+            Write-Host "OK  $f 无 BOM"
+          }
+          foreach ($f in $localScripts) {
+            $b = [System.IO.File]::ReadAllBytes($f)
+            if (-not ($b.Length -ge 3 -and $b[0] -eq 0xEF -and $b[1] -eq 0xBB -and $b[2] -eq 0xBF)) {
+              throw "$f 缺少 BOM（PS5.1 以 -File/dot-source 读取时中文会按 ANSI 误读）"
+            }
+            Write-Host "OK  $f 带 BOM"
+          }
+          # 远程卸载引导额外要求纯 ASCII（对 HTTP charset / 控制台代码页零依赖）
+          $b = [System.IO.File]::ReadAllBytes('uninstall-remote.ps1')
+          if (@($b | Where-Object { $_ -ge 0x80 }).Count -gt 0) { throw 'uninstall-remote.ps1 应保持纯 ASCII' }
+          Write-Host 'OK  uninstall-remote.ps1 纯 ASCII'
